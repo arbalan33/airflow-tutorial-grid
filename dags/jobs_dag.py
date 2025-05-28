@@ -29,7 +29,7 @@ def check_table_exist():
     """ method to check that table exists """
     if True:
 	    return INSERT_ROW_TASK_ID
-    return CREATE_TABLE_TASK_ID
+    # return CREATE_TABLE_TASK_ID
 
 
 def create_db_dag(dag_id, schedule, start_date, table_name):
@@ -41,7 +41,7 @@ def create_db_dag(dag_id, schedule, start_date, table_name):
                                         "table": table_name})
         branch = check_table_exist()
         create_table = EmptyOperator(task_id=CREATE_TABLE_TASK_ID)
-        op2 = EmptyOperator(task_id=INSERT_ROW_TASK_ID)
+        op2 = EmptyOperator(task_id=INSERT_ROW_TASK_ID, trigger_rule="none_failed_min_one_success")
         op3 = EmptyOperator(task_id="query_the_table")
         op1 >> branch >> op2 >> op3
         branch >> create_table >> op2
