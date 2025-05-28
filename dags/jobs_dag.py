@@ -4,6 +4,7 @@ from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.decorators import dag, task
+from airflow.operators.bash import BashOperator
 
 config = {
     'update_table_users': {'schedule_interval': "@daily",
@@ -39,11 +40,13 @@ def create_db_dag(dag_id, schedule, start_date, table_name):
                              python_callable=db_task_info,
                              op_kwargs={"dag_id": dag_id,
                                         "table": table_name})
+        bash_op = BashOperator(task_id="bash_whoami",
+                               bash_command="whoami")
         branch = check_table_exist()
         create_table = EmptyOperator(task_id=CREATE_TABLE_TASK_ID)
         op2 = EmptyOperator(task_id=INSERT_ROW_TASK_ID, trigger_rule="none_failed_min_one_success")
         op3 = EmptyOperator(task_id="query_the_table")
-        op1 >> branch >> op2 >> op3
+        op1 >> bash_op >> branch >> op2 >> op3
         branch >> create_table >> op2
 
     return db_dag()
