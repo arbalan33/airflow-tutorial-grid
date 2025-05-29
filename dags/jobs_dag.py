@@ -11,6 +11,8 @@ from airflow.providers.postgres.hooks.postgres import PostgresHook
 # from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 
+from custom_operators.postgres_operator import PostgreSQLCountRows
+
 
 config = {
     'update_table_users': {'schedule_interval': "@daily",
@@ -83,14 +85,6 @@ def generate_insert_params(ti=None):
         "timestamp": timestamp_value,
     }
 
-@task
-def query_rows_count(table_name: str) -> bool:
-    hook = PostgresHook()
-    sql = f"""SELECT COUNT(*) FROM {table_name};"""
-    count = hook.get_first(sql, parameters=(SCHEMA_NAME, table_name))[0]
-    print(f"Count: {count}")
-    return count
-
 
 def create_db_dag(dag_id, schedule, start_date, table_name):
     @dag(dag_id=dag_id, schedule=schedule, start_date=start_date, catchup=False)
@@ -120,9 +114,13 @@ def create_db_dag(dag_id, schedule, start_date, table_name):
             parameters=params_task,  # This automatically passes the dict as parameters
         )
 
-        query_op = query_rows_count(table_name)
-        xcom_op = push_run_id()
+        query_op = PostgreSQLCountRows(
+            task_id="count_rows",
+            table_name=table_name,
+            conn_id=DB_CONN_ID
+        )
 
+        xcom_op = push_run_id()
 
         op1 >> bash_op >> branch >> params_task >> insert_task >> query_op >> xcom_op
         branch >> create_table >> params_task
