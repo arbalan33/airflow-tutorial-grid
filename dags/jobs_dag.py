@@ -13,7 +13,7 @@ config = {
     'update_table_posts': {'schedule_interval': "@monthly",
                            "start_date": datetime.datetime(2018, 11, 11),
                            "table_name": "tables_posts"},
-    'update_table_likes': {'schedule_interval': "0 0 2 3 *",
+    'update_likes2': {'schedule_interval': "0 0 1 1 *",
                            "start_date": datetime.datetime(2018, 5, 3),
                            "table_name": "table_likes"}
 }
@@ -33,7 +33,14 @@ def check_table_exist():
     # return CREATE_TABLE_TASK_ID
 
 
+@task
+def push_run_id(**context):
+    context['ti'].xcom_push(key='run_id', value="{{ run_id }} ended")
+
+
 def create_db_dag(dag_id, schedule, start_date, table_name):
+    
+
     @dag(dag_id=dag_id, schedule=schedule, start_date=start_date, catchup=False)
     def db_dag():
         op1 = PythonOperator(task_id="print_the_context",
@@ -46,7 +53,9 @@ def create_db_dag(dag_id, schedule, start_date, table_name):
         create_table = EmptyOperator(task_id=CREATE_TABLE_TASK_ID)
         op2 = EmptyOperator(task_id=INSERT_ROW_TASK_ID, trigger_rule="none_failed_min_one_success")
         op3 = EmptyOperator(task_id="query_the_table")
-        op1 >> bash_op >> branch >> op2 >> op3
+        xcom_op = push_run_id()
+
+        op1 >> bash_op >> branch >> op2 >> op3 >> xcom_op
         branch >> create_table >> op2
 
     return db_dag()
