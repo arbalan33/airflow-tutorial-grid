@@ -1,6 +1,5 @@
 from datetime import timedelta, datetime
 
-
 from airflow import DAG
 from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
@@ -10,6 +9,8 @@ from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 from airflow.models.variable import Variable
 from airflow.decorators import task_group
 from airflow.sensors.external_task import ExternalTaskSensor
+
+from slack_task import slack_send_task
 
 
 TRIGGERED_DAG = "update_likes2"
@@ -70,4 +71,7 @@ with DAG(dag_id="trigger_likes_dag2", schedule="0 0 1 1 *", start_date=datetime(
         create_file_op = create_finished_file()
         external_task_sensor >> pull_op >> rm_op >> create_file_op
 
-    sensor >> trigger >> group1()
+
+    slack_op = slack_send_task()
+
+    sensor >> trigger >> group1() >> slack_op
