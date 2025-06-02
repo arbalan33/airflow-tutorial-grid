@@ -24,6 +24,8 @@ Build and run the containers:
 docker compose up
 ```
 
+Set up the three connections as shown (the filesystem connection is expected to map to `/tmp`): 
+![Connections](./img/conn.png)
 
 The second DAG is in a separate directory to test Airflow's packaging feature.
 The contents of `./test_zip` are zipped to `dags/trigger_dag.zip`.
