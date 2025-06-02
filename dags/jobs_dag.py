@@ -1,7 +1,5 @@
 import datetime
 
-from airflow import DAG
-from airflow.operators.empty import EmptyOperator
 from airflow.operators.python import PythonOperator
 from airflow.decorators import dag, task
 from airflow.operators.bash import BashOperator

@@ -1,8 +1,6 @@
 from datetime import timedelta, datetime
 
 from airflow import DAG
-from airflow.operators.empty import EmptyOperator
-from airflow.operators.python import PythonOperator
 from airflow.decorators import dag, task
 from airflow.sensors.filesystem import FileSensor
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
@@ -51,7 +49,8 @@ with DAG(dag_id="trigger_likes_dag2", schedule="0 0 1 1 *", start_date=datetime(
         'trigger_file', default_var=DEFAULT_TRIGGER_FILE)
     sensor = FileSensor(task_id="wait_for_file",
                         filepath=trigger_file,
-                        poke_interval=1)
+                        poke_interval=1,
+                        deferrable=True)
     trigger = TriggerDagRunOperator(
         task_id="test_trigger_dagrun",
         trigger_dag_id=TRIGGERED_DAG,
