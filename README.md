@@ -27,21 +27,31 @@ docker compose up
 Set up the three connections as shown (the filesystem connection is expected to map to `/tmp`): 
 ![Connections](./img/conn.png)
 
-The second DAG is in a separate directory to test Airflow's packaging feature.
+### Running the trigger DAG
+
+The DAG files for this DAG are in a separate directory to test Airflow's packaging feature.
 The contents of `./test_zip` are zipped to `dags/trigger_dag.zip`.
 
-The second DAG waits for the file `/tmp/run`.
+The DAG expects a Slack token in the `slack_token` Variable.
+It can be set like this (it doesn't persist across runs):
+```sh
+docker compose exec vault sh
+vault login ZyrP7NtNw0hbLUqu7N3IlTdO
+vault secrets enable -path=airflow -version=2 kv
+vault kv put airflow/variables/slack_token value=YOUR_SLACK_TOKEN  # stored in the Connections
+```
+
+Trigger the DAG from the UI.
+
+It will wait for the file `/tmp/run` to be created.
 To create it, you can run a command in the `worker` container:
 ```sh
 $ docker-compose exec airflow-worker bash
 airflow@98fd6e672d41:/opt/airflow$ echo test > /tmp/run
 ```
-
-The second DAG expects a Slack token in the `slack_token` Variable.
-It can be set like this (it doesn't persist across runs):
+If using deferrable file sensor, the `airflow-triggerer` also has to see the file.
+This can be accomplished with a shared volume, or simply by creating the file in that container as well:
 ```sh
-docker exec -it VAULT_DOCKER_ID sh
-vault login ZyrP7NtNw0hbLUqu7N3IlTdO
-vault secrets enable -path=airflow -version=2 kv
-vault kv put airflow/variables/slack_token value=YOUR_SLACK_TOKEN
+$ docker-compose exec airflow-triggerer bash
+airflow@98fd6e672d41:/opt/airflow$ echo test > /tmp/run
 ```
