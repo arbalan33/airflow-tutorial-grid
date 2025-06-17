@@ -14,12 +14,11 @@ from slack_task import slack_send_task
 TRIGGERED_DAG = "update_likes2"
 DEFAULT_TRIGGER_FILE = "run"
 
-# TODO: fix the hardcoding of /tmp/ here,
-# we're assuming that the fs_default connection points to /tmp/
-
 
 @task.bash
 def rm_file(path) -> str:
+    # TODO: fix the hardcoding of /tmp/ here,
+    # we're assuming that the fs_default connection points to /tmp/
     return "rm /tmp/" + path
 
 
@@ -69,7 +68,6 @@ with DAG(dag_id="trigger_likes_dag2", schedule="0 0 1 1 *", start_date=datetime(
         pull_op = pull_run_id()
         create_file_op = create_finished_file()
         external_task_sensor >> pull_op >> rm_op >> create_file_op
-
 
     slack_op = slack_send_task()
 
