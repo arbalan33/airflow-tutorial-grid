@@ -38,20 +38,14 @@ It can be set like this (it doesn't persist across runs):
 docker compose exec vault sh
 vault login ZyrP7NtNw0hbLUqu7N3IlTdO
 vault secrets enable -path=airflow -version=2 kv
-vault kv put airflow/variables/slack_token value=YOUR_SLACK_TOKEN  # stored in the Connections
+vault kv put airflow/variables/slack_token value=YOUR_SLACK_TOKEN  # my token is stored in Connections
 ```
 
 Trigger the DAG from the UI.
 
 It will wait for the file `/tmp/run` to be created.
-To create it, you can run a command in the `worker` container:
+Since the FileSensor is deferred, both the worker and the triggerer containers need to see the file.
+For this, we created a shared volume mapping `/tmp` to the `./tmp` directory inside `~/airflow`.
 ```sh
-$ docker-compose exec airflow-worker bash
-airflow@98fd6e672d41:/opt/airflow$ echo test > /tmp/run
-```
-If using deferrable file sensor, the `airflow-triggerer` also has to see the file.
-This can be accomplished with a shared volume, or simply by creating the file in that container as well:
-```sh
-$ docker-compose exec airflow-triggerer bash
-airflow@98fd6e672d41:/opt/airflow$ echo test > /tmp/run
+echo test > ~/airflow/tmp/run
 ```
